@@ -133,7 +133,9 @@ if torch.cuda.is_available() or ngpu != 0:
             )
 
 gpu_info = (
-    "\n".join(gpu_infos) if if_gpu_ok and gpu_infos else i18n("很遗憾您这没有能用的显卡来支持您训练")
+    "\n".join(gpu_infos)
+    if if_gpu_ok and gpu_infos
+    else i18n("很遗憾您这没有能用的显卡来支持您训练")
 )
 default_batch_size = min(mem) // 2 if if_gpu_ok and gpu_infos else 1
 gpus = "-".join(i[0] for i in gpu_infos)
@@ -350,9 +352,11 @@ def vc_multi(
                     tgt_sr, audio_opt = opt
                     output_path = f"{opt_root}/{os.path.basename(path)}"
                     path, extension = (
-                        output_path
-                        if format1 in ["wav", "flac", "mp3", "ogg", "aac"]
-                        else f"{output_path}.wav",
+                        (
+                            output_path
+                            if format1 in ["wav", "flac", "mp3", "ogg", "aac"]
+                            else f"{output_path}.wav"
+                        ),
                         format1,
                     )
                     SFWrite(path, audio_opt, tgt_sr)
@@ -849,9 +853,7 @@ def click_train(
                 + (
                     ".wav.npy"
                     if path in [f0_dir, f0nsf_dir]
-                    else ".wav"
-                    if path == gt_wavs_dir
-                    else ".npy"
+                    else ".wav" if path == gt_wavs_dir else ".npy"
                 )
                 for path in paths
             ]
@@ -1464,7 +1466,8 @@ def GradioSetup():
                     with gr.Row():
                         with gr.Column():
                             vc_transform0 = gr.Number(
-                                label=i18n("变调(整数, 半音数量, 升八度12降八度-12)"), value=0
+                                label=i18n("变调(整数, 半音数量, 升八度12降八度-12)"),
+                                value=0,
                             )
                             input_audio0 = gr.Textbox(
                                 label=i18n(
@@ -1534,7 +1537,9 @@ def GradioSetup():
                             )
                         with gr.Column():
                             file_index1 = gr.Textbox(
-                                label=i18n("特征检索库文件路径,为空则使用下拉的选择结果"),
+                                label=i18n(
+                                    "特征检索库文件路径,为空则使用下拉的选择结果"
+                                ),
                                 value="",
                                 interactive=True,
                             )
@@ -1576,7 +1581,9 @@ def GradioSetup():
                             rms_mix_rate0 = gr.Slider(
                                 minimum=0,
                                 maximum=1,
-                                label=i18n("输入源音量包络替换输出音量包络融合比例，越靠近1越使用输出包络"),
+                                label=i18n(
+                                    "输入源音量包络替换输出音量包络融合比例，越靠近1越使用输出包络"
+                                ),
                                 value=0.25,
                                 interactive=True,
                             )
@@ -1672,11 +1679,17 @@ def GradioSetup():
                                 outputs=[formant_preset, qfrency, tmbre],
                             )
 
-                        f0_file = gr.File(label=i18n("F0曲线文件, 可选, 一行一个音高, 代替默认F0及升降调"))
+                        f0_file = gr.File(
+                            label=i18n(
+                                "F0曲线文件, 可选, 一行一个音高, 代替默认F0及升降调"
+                            )
+                        )
                         but0 = gr.Button(i18n("转换"), variant="primary")
                         with gr.Row():
                             vc_output1 = gr.Textbox(label=i18n("输出信息"))
-                            vc_output2 = gr.Audio(label=i18n("输出音频(右下角三个点,点了可以下载)"))
+                            vc_output2 = gr.Audio(
+                                label=i18n("输出音频(右下角三个点,点了可以下载)")
+                            )
                         but0.click(
                             vc_single,
                             [
@@ -1707,9 +1720,12 @@ def GradioSetup():
                     with gr.Row():
                         with gr.Column():
                             vc_transform1 = gr.Number(
-                                label=i18n("变调(整数, 半音数量, 升八度12降八度-12)"), value=0
+                                label=i18n("变调(整数, 半音数量, 升八度12降八度-12)"),
+                                value=0,
                             )
-                            opt_input = gr.Textbox(label=i18n("指定输出文件夹"), value="opt")
+                            opt_input = gr.Textbox(
+                                label=i18n("指定输出文件夹"), value="opt"
+                            )
                             f0method1 = gr.Radio(
                                 label=i18n(
                                     "选择音高提取算法,输入歌声可用pm提速,harvest低音好但巨慢无比,crepe效果好但吃GPU"
@@ -1731,7 +1747,9 @@ def GradioSetup():
                             )
                         with gr.Column():
                             file_index3 = gr.Textbox(
-                                label=i18n("特征检索库文件路径,为空则使用下拉的选择结果"),
+                                label=i18n(
+                                    "特征检索库文件路径,为空则使用下拉的选择结果"
+                                ),
                                 value="",
                                 interactive=True,
                             )
@@ -1774,7 +1792,9 @@ def GradioSetup():
                             rms_mix_rate1 = gr.Slider(
                                 minimum=0,
                                 maximum=1,
-                                label=i18n("输入源音量包络替换输出音量包络融合比例，越靠近1越使用输出包络"),
+                                label=i18n(
+                                    "输入源音量包络替换输出音量包络融合比例，越靠近1越使用输出包络"
+                                ),
                                 value=1,
                                 interactive=True,
                             )
@@ -1790,13 +1810,17 @@ def GradioSetup():
                             )
                         with gr.Column():
                             dir_input = gr.Textbox(
-                                label=i18n("输入待处理音频文件夹路径(去文件管理器地址栏拷就行了)"),
+                                label=i18n(
+                                    "输入待处理音频文件夹路径(去文件管理器地址栏拷就行了)"
+                                ),
                                 value=os.path.abspath(os.getcwd()).replace("\\", "/")
                                 + "/audios/",
                             )
                             inputs = gr.File(
                                 file_count="multiple",
-                                label=i18n("也可批量输入音频文件, 二选一, 优先读文件夹"),
+                                label=i18n(
+                                    "也可批量输入音频文件, 二选一, 优先读文件夹"
+                                ),
                             )
                         with gr.Row():
                             format1 = gr.Radio(
@@ -1860,7 +1884,9 @@ def GradioSetup():
                             )
                             wav_inputs = gr.File(
                                 file_count="multiple",
-                                label=i18n("也可批量输入音频文件, 二选一, 优先读文件夹"),
+                                label=i18n(
+                                    "也可批量输入音频文件, 二选一, 优先读文件夹"
+                                ),
                             )  #####
                         with gr.Column():
                             model_choose = gr.Dropdown(
@@ -1964,16 +1990,22 @@ def GradioSetup():
                         )
                 with gr.Group():
                     step2b = gr.Markdown(
-                        value=i18n("step2b: 使用CPU提取音高(如果模型带音高), 使用GPU提取特征(选择卡号)")
+                        value=i18n(
+                            "step2b: 使用CPU提取音高(如果模型带音高), 使用GPU提取特征(选择卡号)"
+                        )
                     )
                     with gr.Row():
                         with gr.Column():
                             gpus6 = gr.Textbox(
-                                label=i18n("以-分隔输入使用的卡号, 例如   0-1-2   使用卡0和卡1和卡2"),
+                                label=i18n(
+                                    "以-分隔输入使用的卡号, 例如   0-1-2   使用卡0和卡1和卡2"
+                                ),
                                 value=gpus,
                                 interactive=True,
                             )
-                            gpu_info9 = gr.Textbox(label=i18n("显卡信息"), value=gpu_info)
+                            gpu_info9 = gr.Textbox(
+                                label=i18n("显卡信息"), value=gpu_info
+                            )
                         with gr.Column():
                             f0method8 = gr.Radio(
                                 label=i18n(
@@ -2014,7 +2046,10 @@ def GradioSetup():
                             )
                         but2 = gr.Button(i18n("特征提取"), variant="primary")
                         info2 = gr.Textbox(
-                            label=i18n("输出信息"), value="", max_lines=8, interactive=False
+                            label=i18n("输出信息"),
+                            value="",
+                            max_lines=8,
+                            interactive=False,
                         )
                         but2.click(
                             extract_f0_feature,
@@ -2112,7 +2147,9 @@ def GradioSetup():
                             outputs=[extraction_crepe_hop_length],
                         )
                         gpus16 = gr.Textbox(
-                            label=i18n("以-分隔输入使用的卡号, 例如   0-1-2   使用卡0和卡1和卡2"),
+                            label=i18n(
+                                "以-分隔输入使用的卡号, 例如   0-1-2   使用卡0和卡1和卡2"
+                            ),
                             value=gpus,
                             interactive=True,
                         )
@@ -2121,7 +2158,9 @@ def GradioSetup():
                             variant="primary",
                             visible=False,
                         )
-                        but3 = gr.Button(i18n("训练模型"), variant="primary", visible=True)
+                        but3 = gr.Button(
+                            i18n("训练模型"), variant="primary", visible=True
+                        )
                         but3.click(
                             fn=stoptraining,
                             inputs=[gr.Number(value=0, visible=False)],
@@ -2135,7 +2174,9 @@ def GradioSetup():
 
                         but4 = gr.Button(i18n("训练特征索引"), variant="primary")
                         # but5 = gr.Button(i18n("一键训练"), variant="primary")
-                        info3 = gr.Textbox(label=i18n("输出信息"), value="", max_lines=10)
+                        info3 = gr.Textbox(
+                            label=i18n("输出信息"), value="", max_lines=10
+                        )
 
                         if_save_every_weights18.change(
                             fn=lambda if_save_every_weights: (
@@ -2315,7 +2356,9 @@ def GradioSetup():
                         )
                     with gr.Row():
                         but6 = gr.Button(i18n("融合"), variant="primary")
-                        info4 = gr.Textbox(label=i18n("输出信息"), value="", max_lines=8)
+                        info4 = gr.Textbox(
+                            label=i18n("输出信息"), value="", max_lines=8
+                        )
                     but6.click(
                         merge,
                         [
@@ -2331,7 +2374,11 @@ def GradioSetup():
                         info4,
                     )  # def merge(path1,path2,alpha1,sr,f0,info):
                 with gr.Group():
-                    gr.Markdown(value=i18n("修改模型信息(仅支持weights文件夹下提取的小模型文件)"))
+                    gr.Markdown(
+                        value=i18n(
+                            "修改模型信息(仅支持weights文件夹下提取的小模型文件)"
+                        )
+                    )
                     with gr.Row():  ######
                         ckpt_path0 = gr.Textbox(
                             label=i18n("模型路径"),
@@ -2355,10 +2402,16 @@ def GradioSetup():
                         )
                     with gr.Row():
                         but7 = gr.Button(i18n("修改"), variant="primary")
-                        info5 = gr.Textbox(label=i18n("输出信息"), value="", max_lines=8)
+                        info5 = gr.Textbox(
+                            label=i18n("输出信息"), value="", max_lines=8
+                        )
                     but7.click(change_info, [ckpt_path0, info_, name_to_save1], info5)
                 with gr.Group():
-                    gr.Markdown(value=i18n("查看模型信息(仅支持weights文件夹下提取的小模型文件)"))
+                    gr.Markdown(
+                        value=i18n(
+                            "查看模型信息(仅支持weights文件夹下提取的小模型文件)"
+                        )
+                    )
                     with gr.Row():
                         ckpt_path1 = gr.Textbox(
                             label=i18n("模型路径"),
@@ -2367,7 +2420,9 @@ def GradioSetup():
                             placeholder="Model path here.",
                         )
                         but8 = gr.Button(i18n("查看"), variant="primary")
-                        info6 = gr.Textbox(label=i18n("输出信息"), value="", max_lines=8)
+                        info6 = gr.Textbox(
+                            label=i18n("输出信息"), value="", max_lines=8
+                        )
                     but8.click(show_info, [ckpt_path1], info6)
                 with gr.Group():
                     gr.Markdown(
@@ -2414,7 +2469,9 @@ def GradioSetup():
                             placeholder="Model info here.",
                         )
                         but9 = gr.Button(i18n("提取"), variant="primary")
-                        info7 = gr.Textbox(label=i18n("输出信息"), value="", max_lines=8)
+                        info7 = gr.Textbox(
+                            label=i18n("输出信息"), value="", max_lines=8
+                        )
                         ckpt_path2.change(
                             change_info_, [ckpt_path2], [sr__, if_f0__, version_1]
                         )
