@@ -1,11 +1,10 @@
 import ffmpeg
 import numpy as np
 
-# import praatio
-# import praatio.praat_scripts
 import os
 import sys
 
+from shlex import quote as RQuote
 import random
 
 import csv
@@ -17,7 +16,6 @@ platform_stft_mapping = {
 }
 
 stft = platform_stft_mapping.get(sys.platform)
-# praatEXE = join('.',os.path.abspath(os.getcwd()) + r"\Praat.exe")
 
 
 def CSVutil(file, rw, type, *args):
@@ -51,33 +49,21 @@ def load_audio(file, sr, DoFormant, Quefrency, Timbre):
     converted = False
     DoFormant, Quefrency, Timbre = CSVutil("csvdb/formanting.csv", "r", "formanting")
     try:
-        # https://github.com/openai/whisper/blob/main/whisper/audio.py#L26
-        # This launches a subprocess to decode audio while down-mixing and resampling as necessary.
-        # Requires the ffmpeg CLI and `ffmpeg-python` package to be installed.
-        file = (
-            file.strip(" ").strip('"').strip("\n").strip('"').strip(" ")
-        )  # 防止小白拷路径头尾带了空格和"和回车
+        file = file.strip(" ").strip('"').strip("\n").strip('"').strip(" ")
         file_formanted = file.strip(" ").strip('"').strip("\n").strip('"').strip(" ")
 
-        # print(f"dofor={bool(DoFormant)} timbr={Timbre} quef={Quefrency}\n")
-
-        if (
-            lambda DoFormant: True
-            if DoFormant.lower() == "true"
-            else (False if DoFormant.lower() == "false" else DoFormant)
-        )(DoFormant):
+        if DoFormant.lower() == "true":
             numerator = round(random.uniform(1, 4), 4)
-            # os.system(f"stftpitchshift -i {file} -q {Quefrency} -t {Timbre} -o {file_formanted}")
-            # print('stftpitchshift -i "%s" -p 1.0 --rms -w 128 -v 8 -q %s -t %s -o "%s"' % (file, Quefrency, Timbre, file_formanted))
 
             if not file.endswith(".wav"):
+
                 if not os.path.isfile(f"{file_formanted}.wav"):
                     converted = True
                     # print(f"\nfile = {file}\n")
                     # print(f"\nfile_formanted = {file_formanted}\n")
                     converting = (
                         ffmpeg.input(file_formanted, threads=0)
-                        .output(f"{file_formanted}.wav")
+                        .output(f"{RQuote(file_formanted)}.wav")
                         .run(
                             cmd=["ffmpeg", "-nostdin"],
                             capture_stdout=True,
@@ -86,7 +72,6 @@ def load_audio(file, sr, DoFormant, Quefrency, Timbre):
                     )
                 else:
                     pass
-
             file_formanted = (
                 f"{file_formanted}.wav"
                 if not file_formanted.endswith(".wav")
@@ -95,27 +80,17 @@ def load_audio(file, sr, DoFormant, Quefrency, Timbre):
 
             print(f" · Formanting {file_formanted}...\n")
 
-            os.system(
-                '%s -i "%s" -q "%s" -t "%s" -o "%sFORMANTED_%s.wav"'
-                % (
-                    stft,
-                    file_formanted,
-                    Quefrency,
-                    Timbre,
-                    file_formanted,
-                    str(numerator),
-                )
+            command = (
+                f'{RQuote(stft)} -i "{RQuote(file_formanted)}" -q "{RQuote(Quefrency)}" '
+                f'-t "{RQuote(Timbre)}" -o "{RQuote(file_formanted)}FORMANTED_{RQuote(str(numerator))}.wav"'
             )
+            os.system(command)
 
             print(f" · Formanted {file_formanted}!\n")
 
-            # filepraat = (os.path.abspath(os.getcwd()) + '\\' + file).replace('/','\\')
-            # file_formantedpraat = ('"' + os.path.abspath(os.getcwd()) + '/' + 'formanted'.join(file_formanted) + '"').replace('/','\\')
-            # print("%sFORMANTED_%s.wav" % (file_formanted, str(numerator)))
-
             out, _ = (
                 ffmpeg.input(
-                    "%sFORMANTED_%s.wav" % (file_formanted, str(numerator)), threads=0
+                    f"{file_formanted}FORMANTED_{str(numerator)}.wav", threads=0
                 )
                 .output("-", format="f32le", acodec="pcm_f32le", ac=1, ar=sr)
                 .run(
@@ -124,10 +99,10 @@ def load_audio(file, sr, DoFormant, Quefrency, Timbre):
             )
 
             try:
-                os.remove("%sFORMANTED_%s.wav" % (file_formanted, str(numerator)))
-            except Exception:
+                os.remove(f"{file_formanted}FORMANTED_{str(numerator)}.wav")
+            except Exception as e:
                 pass
-                print("couldn't remove formanted type of file")
+                print(f"couldn't remove formanted type of file due to {e}")
 
         else:
             out, _ = (
@@ -143,9 +118,34 @@ def load_audio(file, sr, DoFormant, Quefrency, Timbre):
     if converted:
         try:
             os.remove(file_formanted)
-        except Exception:
+        except Exception as e:
             pass
-            print("couldn't remove converted type of file")
+            print(f"Couldn't remove converted type of file due to {e}")
         converted = False
 
     return np.frombuffer(out, np.float32).flatten()
+
+
+def check_audio_duration(file):
+    try:
+        # Strip whitespaces and unnecessary characters from the file name
+        file = file.strip(" ").strip('"').strip("\n").strip('"').strip(" ")
+
+        # Probe the audio file for information
+        probe = ffmpeg.probe(file)
+
+        # Extract the duration from the probe result
+        duration = float(probe["streams"][0]["duration"])
+
+        # If the duration is less than 0.75 seconds, print the message and exit the loop
+        if duration < 0.76:
+            print(
+                f"\n------------\n"
+                f"Audio file, {file.split('/')[-1]}, under ~0.76s detected - file is too short. Target at least 1-2s for best results."
+                f"\n------------\n\n"
+            )
+            return False
+
+        return True
+    except Exception as e:
+        raise RuntimeError(f"Failed to check audio duration: {e}")
